@@ -7,6 +7,8 @@ import os
 import shutil
 import uuid
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 from typing import Optional, List
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -186,6 +188,7 @@ def get_complaint_detail(complaint_id: str):
             similar_list = []
 
     return {
+        **complaint,
         "complaint": complaint,
         "image_url": image_url,
         "analysis": analysis,
@@ -247,8 +250,10 @@ async def create_complaint(
     )
 
     saved_complaint = db.get_complaint(cid)
+    ticket_id = saved_complaint.get("ticket_id") if saved_complaint else f"GWMC-{datetime.now().strftime('%Y%m%d')}-{cid[:4].upper()}"
     return {
         "success": True,
+        "ticket_id": ticket_id,
         "complaint": saved_complaint,
         "analysis": analysis_result
     }

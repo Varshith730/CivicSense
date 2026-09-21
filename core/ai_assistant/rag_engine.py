@@ -228,20 +228,21 @@ Provide a helpful, structured response:
 
     # 1. Attempt Gemini via modern google-genai
     if api_key and GENAI_NEW_AVAILABLE:
-        try:
-            client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=full_prompt,
-            )
-            return {
-                "answer": response.text,
-                "model": "gemini-2.5-flash",
-                "sources": sources,
-                "ticket_found": ticket_info is not None
-            }
-        except Exception as e:
-            print(f"[LLM] Error with google.genai: {e}")
+        client = genai.Client(api_key=api_key)
+        for model_name in ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash']:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=full_prompt,
+                )
+                return {
+                    "answer": response.text,
+                    "model": model_name,
+                    "sources": sources,
+                    "ticket_found": ticket_info is not None
+                }
+            except Exception as e:
+                print(f"[LLM] Model {model_name} note: {e}")
 
     # 2. Attempt legacy google.generativeai
     if api_key and LEGACY_GENAI_AVAILABLE:
