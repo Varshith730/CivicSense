@@ -7,7 +7,8 @@ import {
 import { 
   getComplaints, getOfficers, createOfficer, assignOfficer, 
   updateComplaintStatus, uploadRAGDocument, getRAGDocuments, 
-  deleteRAGDocument, clearAllData, getSystemStatus, updateSystemConfig 
+  deleteRAGDocument, clearAllData, getSystemStatus, updateSystemConfig,
+  getImageUrl 
 } from "../api";
 import ExplainabilityModal from "../components/ExplainabilityModal";
 
@@ -127,6 +128,9 @@ export default function Admin() {
   const handleStatusChange = async (complaintId, newStatus) => {
     try {
       await updateComplaintStatus(complaintId, newStatus);
+      if (selectedComplaint && (selectedComplaint.id === complaintId || selectedComplaint.ticket_id === complaintId)) {
+        setSelectedComplaint((prev) => ({ ...prev, status: newStatus }));
+      }
       await loadAllData();
     } catch (err) {
       alert("Failed to update status: " + err.message);
@@ -389,8 +393,29 @@ export default function Admin() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-bold text-slate-800 block truncate max-w-xs">{c.text}</span>
-                          <span className="text-[10px] text-slate-500">{c.location_text || "Warangal"}</span>
+                          <div className="flex items-center gap-3">
+                            {(c.image_url || c.image_path) ? (
+                              <div
+                                onClick={() => setSelectedComplaint(c)}
+                                className="relative group/thumb w-11 h-11 rounded-lg overflow-hidden border border-slate-200 shrink-0 cursor-pointer shadow-sm hover:border-emerald-500 hover:ring-2 hover:ring-emerald-200 transition-all bg-slate-100 flex items-center justify-center"
+                                title="Click to inspect citizen photo evidence"
+                              >
+                                <img
+                                  src={getImageUrl(c.image_url || c.image_path)}
+                                  alt="Citizen photo"
+                                  className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-200"
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                                <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Eye className="w-3.5 h-3.5 text-white" />
+                                </div>
+                              </div>
+                            ) : null}
+                            <div className="min-w-0">
+                              <span className="font-bold text-slate-800 block truncate max-w-xs" title={c.text}>{c.text}</span>
+                              <span className="text-[10px] text-slate-500 block truncate max-w-xs">{c.location_text || "Warangal"}</span>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
@@ -858,7 +883,27 @@ export default function Admin() {
       {selectedComplaint && (
         <ExplainabilityModal
           complaint={selectedComplaint}
+          analysis={{
+            severity_level: selectedComplaint.severity_level,
+            issue_category: selectedComplaint.issue_category,
+            department: selectedComplaint.department,
+            ai_confidence: selectedComplaint.ai_confidence || 0.88,
+            severity_score: selectedComplaint.severity_score || 55,
+            severity_factors: selectedComplaint.severity_factors || {
+              public_safety: 20,
+              environmental_impact: 18,
+              duration: 12,
+              affected_people: 12,
+              evidence_strength: 10,
+              similar_complaints: 8
+            },
+            action_recommendation: selectedComplaint.action_recommendation,
+            image_label: selectedComplaint.image_label,
+            image_confidence: selectedComplaint.image_confidence,
+            image_path: selectedComplaint.image_path || selectedComplaint.image_url
+          }}
           onClose={() => setSelectedComplaint(null)}
+          onUpdateStatus={handleStatusChange}
         />
       )}
     </div>

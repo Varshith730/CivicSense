@@ -6,6 +6,18 @@ export const api = axios.create({
   baseURL: API_BASE,
 });
 
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith("data:") || imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+  if (imagePath.startsWith("/warangal/")) {
+    return imagePath;
+  }
+  const filename = imagePath.split(/[\\/]/).pop();
+  return `${API_BASE}/uploads/${filename}`;
+};
+
 // Complaints & Triage
 export const getKPIs = async () => (await api.get("/api/kpi")).data;
 export const getComplaints = async (params) => (await api.get("/api/complaints", { params })).data;

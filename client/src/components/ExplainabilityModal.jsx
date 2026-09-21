@@ -1,9 +1,13 @@
 import React from "react";
-import { X, AlertTriangle, ShieldCheck, CheckCircle, HelpCircle, Building, Clock, MapPin, Users } from "lucide-react";
+import { X, AlertTriangle, ShieldCheck, CheckCircle, HelpCircle, Building, Clock, MapPin, Users, Camera, ExternalLink } from "lucide-react";
 import SeverityBadge from "./SeverityBadge";
+import { getImageUrl } from "../api";
 
 export default function ExplainabilityModal({ complaint, analysis, onClose, onUpdateStatus }) {
   if (!complaint) return null;
+
+  const rawImagePath = complaint.image_path || complaint.image_url || analysis?.image_path;
+  const imageUrl = getImageUrl(rawImagePath);
 
   const factors = analysis?.severity_factors || {};
   const maxWeights = {
@@ -59,9 +63,54 @@ export default function ExplainabilityModal({ complaint, analysis, onClose, onUp
                 <MapPin className="w-3.5 h-3.5 text-slate-400" />
                 {complaint.location_text || "Location not specified"}
               </span>
-              <span>Category: <strong>{analysis?.issue_category || "Unassigned"}</strong></span>
+              <span>Category: <strong>{analysis?.issue_category || complaint.issue_category || "Unassigned"}</strong></span>
             </div>
           </div>
+
+          {/* Citizen Photographic Evidence */}
+          {imageUrl ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Citizen Photographic Evidence</span>
+                </div>
+                <a
+                  href={imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                >
+                  <span>Open Full Size</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-900/5 max-h-64 flex items-center justify-center">
+                <img 
+                  src={imageUrl} 
+                  alt="Citizen Uploaded Evidence" 
+                  className="max-h-64 w-full object-contain hover:scale-105 transition-transform duration-300 rounded-lg"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+              {analysis?.image_label && (
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                  <span>Vision Analysis: <strong>{analysis.image_label}</strong></span>
+                  {analysis.image_confidence && (
+                    <span className="text-emerald-700 font-bold">Confidence: {Math.round(analysis.image_confidence * 100)}%</span>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-slate-50/60 border border-slate-200/80 rounded-2xl p-3 flex items-center gap-2 text-xs text-slate-400 italic">
+              <Camera className="w-4 h-4 text-slate-300" />
+              <span>No photographic evidence was attached to this ticket.</span>
+            </div>
+          )}
 
           {/* Transparent 6-Factor Breakdown */}
           <div>
@@ -114,7 +163,7 @@ export default function ExplainabilityModal({ complaint, analysis, onClose, onUp
                 Recommended Department
               </div>
               <div className="text-sm font-bold text-emerald-950">
-                {analysis?.department || "Public Works Department"}
+                {analysis?.department || complaint.department || "GWMC Engineering & Town Planning"}
               </div>
             </div>
 
@@ -123,30 +172,47 @@ export default function ExplainabilityModal({ complaint, analysis, onClose, onUp
                 Recommended Municipal Action
               </div>
               <p className="text-xs text-blue-950 font-medium leading-relaxed">
-                {analysis?.action_recommendation || "Dispatch field inspection crew within 48 hours."}
+                {analysis?.action_recommendation || complaint.action_recommendation || "Dispatch field inspection crew within 48 hours."}
               </p>
             </div>
           </div>
 
           {/* Human-In-The-Loop Status Override */}
           <div className="pt-2 border-t border-slate-200">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-              Human-in-the-loop Resolution Control
+            <div className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>Human-in-the-loop Resolution Control</span>
+              <span className="text-[10px] font-bold text-emerald-600 uppercase bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Current: {complaint.status?.replace("_", " ") || "pending"}
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {["pending", "in_review", "resolved", "closed"].map((st) => (
-                <button
-                  key={st}
-                  onClick={() => onUpdateStatus(complaint.id, st)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                    complaint.status === st
-                      ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  Mark as {st.replace("_", " ").toUpperCase()}
-                </button>
-              ))}
+              {[
+                { id: "pending", label: "Pending" },
+                { id: "assigned", label: "Assigned" },
+                { id: "in_progress", label: "In Review" },
+                { id: "resolved", label: "Resolved" },
+                { id: "closed", label: "Closed" }
+              ].map((st) => {
+                const isActive = complaint.status === st.id || (st.id === "in_progress" && complaint.status === "in_review");
+                return (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => {
+                      if (onUpdateStatus) {
+                        onUpdateStatus(complaint.id || complaint.ticket_id, st.id);
+                      }
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+                      isActive
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/20"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+                    }`}
+                  >
+                    Mark as {st.label.toUpperCase()}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
