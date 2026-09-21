@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { FlaskConical, Play, Sparkles, AlertTriangle, ShieldCheck, CheckCircle2, Building, HelpCircle } from "lucide-react";
 import { testAnalyze } from "../api";
 import SeverityBadge from "../components/SeverityBadge";
@@ -106,7 +106,7 @@ export default function AnalysisLab() {
         {/* Right: Real-Time Inference Output */}
         <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-soft space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900">Inference Dossier</h3>
+            <h3 className="text-sm font-bold text-slate-900">AI Triage Breakdown</h3>
             {analysis && <SeverityBadge level={analysis.severity?.level} />}
           </div>
 

@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { X, AlertTriangle, ShieldCheck, CheckCircle, HelpCircle, Building, Clock, MapPin, Users } from "lucide-react";
 import SeverityBadge from "./SeverityBadge";
 
@@ -158,7 +158,7 @@ export default function ExplainabilityModal({ complaint, analysis, onClose, onUp
             onClick={onClose}
             className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded-xl text-xs transition-all"
           >
-            Close Dossier
+            Close Details
           </button>
         </div>
       </div>

@@ -6,7 +6,6 @@ import {
   HelpCircle, Compass, Layers, ChevronRight
 } from "lucide-react";
 import { submitComplaint, getComplaintDetail, chatWithAssistant } from "../api";
-import SubmissionDossierModal from "../components/SubmissionDossierModal";
 
 const WARANGAL_LANDMARKS = [
   { name: "Hanamkonda Rythu Bazar", lat: 18.0125, lng: 79.5603 },
@@ -95,9 +94,6 @@ const SAMPLE_WARANGAL_ISSUES = [
 export default function CitizenPortal({ onComplaintSubmitted, onSwitchToAdmin }) {
   const [activeSubTab, setActiveSubTab] = useState("lodge"); // lodge | track | chatbot | map
   const formRef = useRef(null);
-
-  // Submission Dossier Modal State
-  const [showDossier, setShowDossier] = useState(false);
 
   // Lodge Form State
   const [category, setCategory] = useState(CIVIC_CATEGORIES[0]);
@@ -256,16 +252,16 @@ export default function CitizenPortal({ onComplaintSubmitted, onSwitchToAdmin })
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-emerald-950/90 to-teal-950/80 backdrop-blur-[2px]"></div>
 
         <div className="relative z-10 p-8 sm:p-12 text-white max-w-3xl">
-          {/* Partnership Badges */}
+          {/* Municipal Badges */}
           <div className="flex items-center gap-2 flex-wrap mb-4">
-            <span className="px-3 py-1 bg-amber-400 text-slate-950 text-[10px] font-black rounded-full uppercase tracking-wider shadow-sm">
-              1M1B • IBM SkillsBuild • AICTE
-            </span>
             <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-bold rounded-full">
-              SDG 11: Sustainable Cities
+              GWMC Smart City Mission • Telangana
+            </span>
+            <span className="px-3 py-1 bg-teal-500/20 border border-teal-400/40 text-teal-300 text-[10px] font-bold rounded-full">
+              SDG 11: Sustainable Cities & Communities
             </span>
             <span className="px-3 py-1 bg-blue-500/20 border border-blue-400/40 text-blue-300 text-[10px] font-bold rounded-full hidden sm:inline">
-              Co-Developed with IBM BOB
+              Citizen Public Services (24x7)
             </span>
           </div>
 
@@ -317,14 +313,6 @@ export default function CitizenPortal({ onComplaintSubmitted, onSwitchToAdmin })
             >
               <Sparkles className="w-4 h-4 text-amber-300" />
               <span>RAG AI Assistant</span>
-            </button>
-
-            <button
-              onClick={() => setShowDossier(true)}
-              className="px-5 py-3 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-400/20 transition-all flex items-center gap-1.5 ml-auto"
-            >
-              <Award className="w-4 h-4" />
-              <span>1M1B Submission Dossier</span>
             </button>
           </div>
         </div>
@@ -869,13 +857,6 @@ export default function CitizenPortal({ onComplaintSubmitted, onSwitchToAdmin })
           </div>
         )}
       </div>
-
-      {/* Submission Dossier Modal */}
-      <SubmissionDossierModal
-        isOpen={showDossier}
-        onClose={() => setShowDossier(false)}
-      />
-
     </div>
   );
 }
