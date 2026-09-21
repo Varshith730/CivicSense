@@ -94,8 +94,8 @@ export default function Sidebar({ activeTab, setActiveTab, kpis }) {
       {/* Bottom Municipal Command Center Card */}
       <div className="pt-4 border-t border-slate-100 space-y-3">
         <div className="p-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl text-white shadow-sm">
-          <div className="flex items-center gap-2 mb-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <div className="flex items-center gap-2.5 mb-2">
+            <img src="/logo.png" alt="GWMC Logo" className="w-7 h-7 rounded-full bg-white p-0.5 object-contain shadow-sm" />
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
               GWMC Command Center
             </span>

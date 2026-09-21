@@ -329,69 +329,90 @@ export default function CitizenPortal({ onComplaintSubmitted, onSwitchToAdmin })
         ></div>
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-emerald-950/90 to-teal-950/80 backdrop-blur-[2px]"></div>
 
-        <div className="relative z-10 p-8 sm:p-12 text-white max-w-3xl">
-          {/* Municipal Badges */}
-          <div className="flex items-center gap-2 flex-wrap mb-4">
-            <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-bold rounded-full">
-              GWMC Smart City Mission • Telangana
-            </span>
-            <span className="px-3 py-1 bg-teal-500/20 border border-teal-400/40 text-teal-300 text-[10px] font-bold rounded-full">
-              SDG 11: Sustainable Cities & Communities
-            </span>
-            <span className="px-3 py-1 bg-blue-500/20 border border-blue-400/40 text-blue-300 text-[10px] font-bold rounded-full hidden sm:inline">
-              Citizen Public Services (24x7)
-            </span>
+        <div className="relative z-10 p-8 sm:p-12 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+          <div className="max-w-2xl">
+            {/* Municipal Badges */}
+            <div className="flex items-center gap-2 flex-wrap mb-4">
+              <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-bold rounded-full">
+                GWMC Smart City Mission • Telangana
+              </span>
+              <span className="px-3 py-1 bg-teal-500/20 border border-teal-400/40 text-teal-300 text-[10px] font-bold rounded-full">
+                SDG 11: Sustainable Cities & Communities
+              </span>
+              <span className="px-3 py-1 bg-blue-500/20 border border-blue-400/40 text-blue-300 text-[10px] font-bold rounded-full hidden sm:inline">
+                Citizen Public Services (24x7)
+              </span>
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight mb-3">
+              Greater Warangal <br className="hidden sm:inline" />
+              <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+                CivicSense Intelligence
+              </span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed mb-8">
+              Empowering citizens across Hanamkonda, Kazipet, and Warangal with multimodal AI grievance triage, 
+              instant department routing, and transparent resolution tracking for sustainable urban governance.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setActiveSubTab("lodge")}
+                className={`px-5 py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2 ${
+                  activeSubTab === "lodge" 
+                    ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30" 
+                    : "bg-white/10 hover:bg-white/20 text-white"
+                }`}
+              >
+                <Camera className="w-4 h-4" />
+                <span>Report Civic Issue</span>
+              </button>
+
+              <button
+                onClick={() => setActiveSubTab("track")}
+                className={`px-5 py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2 ${
+                  activeSubTab === "track" 
+                    ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30" 
+                    : "bg-white/10 hover:bg-white/20 text-white"
+                }`}
+              >
+                <Search className="w-4 h-4" />
+                <span>Track Ticket ID</span>
+              </button>
+
+              <button
+                onClick={() => setActiveSubTab("chatbot")}
+                className={`px-5 py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2 ${
+                  activeSubTab === "chatbot" 
+                    ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30" 
+                    : "bg-white/10 hover:bg-white/20 text-white"
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span>RAG AI Assistant</span>
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight mb-3">
-            Greater Warangal <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              CivicSense Intelligence
-            </span>
-          </h1>
-
-          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed mb-8">
-            Empowering citizens across Hanamkonda, Kazipet, and Warangal with multimodal AI grievance triage, 
-            instant department routing, and transparent resolution tracking for sustainable urban governance.
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setActiveSubTab("lodge")}
-              className={`px-5 py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2 ${
-                activeSubTab === "lodge" 
-                  ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30" 
-                  : "bg-white/10 hover:bg-white/20 text-white"
-              }`}
-            >
-              <Camera className="w-4 h-4" />
-              <span>Report Civic Issue</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab("track")}
-              className={`px-5 py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2 ${
-                activeSubTab === "track" 
-                  ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30" 
-                  : "bg-white/10 hover:bg-white/20 text-white"
-              }`}
-            >
-              <Search className="w-4 h-4" />
-              <span>Track Ticket ID</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab("chatbot")}
-              className={`px-5 py-3 rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2 ${
-                activeSubTab === "chatbot" 
-                  ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30" 
-                  : "bg-white/10 hover:bg-white/20 text-white"
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>RAG AI Assistant</span>
-            </button>
+          {/* Official Emblem Logo */}
+          <div className="hidden lg:flex flex-col items-center shrink-0 pr-4 animate-in fade-in">
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl hover:scale-105 transition-transform duration-300">
+              <img 
+                src="/logo.png" 
+                alt="CivicSense AI Greater Warangal Emblem" 
+                className="w-44 h-44 xl:w-48 xl:h-48 object-contain drop-shadow-2xl"
+              />
+            </div>
+            <div className="mt-2 text-center">
+              <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-widest block">
+                Official GWMC AI Seal
+              </span>
+              <span className="text-[9px] text-slate-300">
+                Cleaner • Greener • Smarter
+              </span>
+            </div>
           </div>
         </div>
       </div>

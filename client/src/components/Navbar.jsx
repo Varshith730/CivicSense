@@ -11,9 +11,11 @@ export default function Navbar({ activeMode, setActiveMode, setActiveTab }) {
           className="flex items-center gap-3 cursor-pointer" 
           onClick={() => { setActiveMode("citizen"); setActiveTab("citizen"); }}
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-700 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 shrink-0">
-            <Building2 className="w-5 h-5" />
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="CivicSense AI Logo" 
+            className="w-11 h-11 object-contain rounded-full shadow-md border border-emerald-500/30 shrink-0 bg-white p-0.5" 
+          />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-black text-base text-slate-900 tracking-tight leading-none">CivicSense AI</span>
