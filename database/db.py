@@ -269,6 +269,48 @@ def assign_complaint_officer(complaint_id: str, officer_id: str, officer_name: s
     return True
 
 
+def delete_complaint(complaint_id_or_ticket_id: str) -> bool:
+    """Deletes a complaint by ID or ticket ID from SQLite and Firestore, cleaning up related records and images."""
+    complaint = get_complaint(complaint_id_or_ticket_id)
+    if not complaint:
+        complaint = get_complaint_by_ticket(complaint_id_or_ticket_id)
+
+    target_id = complaint["id"] if complaint else complaint_id_or_ticket_id
+    ticket_id = complaint.get("ticket_id") if complaint else complaint_id_or_ticket_id
+    image_path = complaint.get("image_path") if complaint else None
+    officer_id = complaint.get("assigned_officer_id") if complaint else None
+
+    # 1. SQLite cleanup
+    with get_connection() as conn:
+        conn.execute("DELETE FROM complaints WHERE id = ? OR ticket_id = ?", (target_id, ticket_id))
+        conn.execute("DELETE FROM analysis_results WHERE complaint_id = ?", (target_id,))
+        conn.execute("DELETE FROM complaint_incidents WHERE complaint_id = ?", (target_id,))
+        if officer_id:
+            conn.execute("UPDATE officers SET active_tickets = MAX(0, active_tickets - 1) WHERE id = ?", (officer_id,))
+        conn.commit()
+
+    # 2. Firestore cleanup
+    fs = get_firestore_client()
+    if fs:
+        try:
+            fs.collection("complaints").document(target_id).delete()
+            if ticket_id:
+                for doc in fs.collection("complaints").where("ticket_id", "==", ticket_id).stream():
+                    doc.reference.delete()
+        except Exception as e:
+            print(f"[Firebase] Error deleting complaint {target_id}: {e}")
+
+    # 3. Clean up physical image file if present
+    if image_path and os.path.exists(image_path):
+        try:
+            os.remove(image_path)
+        except Exception:
+            pass
+
+    return True
+
+
+
 # ── Analysis CRUD ─────────────────────────────────────────────────
 
 def insert_analysis(complaint_id: str, analysis: Dict[str, Any]):

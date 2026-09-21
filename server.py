@@ -213,6 +213,14 @@ def update_status(complaint_id: str, req: StatusUpdateRequest):
     return {"success": True, "id": complaint["id"], "status": req.status}
 
 
+@app.delete("/api/complaints/{complaint_id}")
+def delete_complaint_endpoint(complaint_id: str):
+    """Delete a complaint and its analysis by ID or ticket ID."""
+    success = db.delete_complaint(complaint_id)
+    return {"success": success, "id": complaint_id}
+
+
+
 @app.post("/api/complaints")
 async def create_complaint(
     text: str = Form(...),

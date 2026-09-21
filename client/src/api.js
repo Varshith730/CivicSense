@@ -23,6 +23,7 @@ export const getKPIs = async () => (await api.get("/api/kpi")).data;
 export const getComplaints = async (params) => (await api.get("/api/complaints", { params })).data;
 export const getComplaintDetail = async (id) => (await api.get(`/api/complaints/${id}`)).data;
 export const updateComplaintStatus = async (id, status) => (await api.patch(`/api/complaints/${id}/status`, { status })).data;
+export const deleteComplaint = async (id) => (await api.delete(`/api/complaints/${id}`)).data;
 export const submitComplaint = async (formData) => (await api.post("/api/complaints", formData, {
   headers: { "Content-Type": "multipart/form-data" },
 })).data;

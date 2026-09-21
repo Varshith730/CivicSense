@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { 
   getComplaints, getOfficers, createOfficer, assignOfficer, 
-  updateComplaintStatus, uploadRAGDocument, getRAGDocuments, 
+  updateComplaintStatus, deleteComplaint, uploadRAGDocument, getRAGDocuments, 
   deleteRAGDocument, clearAllData, getSystemStatus, updateSystemConfig,
   getImageUrl 
 } from "../api";
@@ -134,6 +134,22 @@ export default function Admin() {
       await loadAllData();
     } catch (err) {
       alert("Failed to update status: " + err.message);
+    }
+  };
+
+  // Delete Complaint
+  const handleDeleteComplaint = async (complaint) => {
+    if (!window.confirm(`Are you sure you want to permanently delete ticket ${complaint.ticket_id}?`)) {
+      return;
+    }
+    try {
+      await deleteComplaint(complaint.id || complaint.ticket_id);
+      if (selectedComplaint && (selectedComplaint.id === complaint.id || selectedComplaint.ticket_id === complaint.ticket_id)) {
+        setSelectedComplaint(null);
+      }
+      await loadAllData();
+    } catch (err) {
+      alert("Failed to delete ticket: " + err.message);
     }
   };
 
@@ -462,6 +478,13 @@ export default function Admin() {
                             title="View XAI Severity Breakdown"
                           >
                             <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComplaint(c)}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors"
+                            title="Delete Complaint"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </td>
                       </tr>
