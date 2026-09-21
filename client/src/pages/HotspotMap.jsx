@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L from "leaflet";
 import { MapPin, Sliders } from "lucide-react";
@@ -57,6 +57,8 @@ export default function HotspotMap() {
     iconAnchor: [5, 5],
   });
 
+  const [mapViewMode, setMapViewMode] = useState("leaflet"); // leaflet | blueprint
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header */}
@@ -70,6 +72,25 @@ export default function HotspotMap() {
           <p className="text-xs text-slate-500 mt-1">
             Spatial DBSCAN clustering over real GWMC ward localities — Hanamkonda, Kazipet, Warangal, NIT, KU, MGM, Fort Road and Balasamudram zones.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+          <button
+            onClick={() => setMapViewMode("leaflet")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              mapViewMode === "leaflet" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Live GPS Map
+          </button>
+          <button
+            onClick={() => setMapViewMode("blueprint")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              mapViewMode === "blueprint" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Warangal GIS Blueprint
+          </button>
         </div>
 
         {/* Controls */}
@@ -106,73 +127,83 @@ export default function HotspotMap() {
         </div>
       </div>
 
-      {/* Map */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-4 shadow-soft overflow-hidden">
-        <div className="h-[560px] w-full rounded-2xl overflow-hidden">
-          <MapContainer center={WARANGAL_CENTER} zoom={13} scrollWheelZoom={true} className="h-full w-full">
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+      {/* Map or Blueprint View */}
+      {mapViewMode === "leaflet" ? (
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-4 shadow-soft overflow-hidden">
+          <div className="h-[560px] w-full rounded-2xl overflow-hidden">
+            <MapContainer center={WARANGAL_CENTER} zoom={13} scrollWheelZoom={true} className="h-full w-full">
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
 
-            {/* GWMC Landmark Zone markers */}
-            {showZones && WARANGAL_ZONES.map((z, i) => (
-              <Marker key={`zone-${i}`} position={[z.lat, z.lon]} icon={zoneIcon}>
-                <Popup>
-                  <div className="p-1 text-xs space-y-1">
-                    <div className="font-bold text-amber-800">{z.name}</div>
-                    <div className="text-slate-500">{z.note}</div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-
-            {/* Complaint markers */}
-            {data.complaints.map((c, i) => (
-              c.latitude && c.longitude ? (
-                <Marker key={i} position={[c.latitude, c.longitude]}>
+              {/* GWMC Landmark Zone markers */}
+              {showZones && WARANGAL_ZONES.map((z, i) => (
+                <Marker key={`zone-${i}`} position={[z.lat, z.lon]} icon={zoneIcon}>
                   <Popup>
-                    <div className="p-1 space-y-1 text-xs">
-                      <div className="font-bold text-slate-900">{c.issue_category}</div>
-                      <div className="text-slate-600 font-medium">{c.location_text}</div>
-                      <div className="pt-1"><SeverityBadge level={c.severity_level} /></div>
+                    <div className="p-1 text-xs space-y-1">
+                      <div className="font-bold text-amber-800">{z.name}</div>
+                      <div className="text-slate-500">{z.note}</div>
                     </div>
                   </Popup>
                 </Marker>
-              ) : null
-            ))}
+              ))}
 
-            {/* DBSCAN Hotspot circles */}
-            {data.hotspots?.map((h, idx) => (
-              <Circle key={idx} center={[h.center_lat, h.center_lon]} radius={eps * 1000}
-                pathOptions={{
-                  color: h.dominant_severity === "CRITICAL" ? "#ef4444" : h.dominant_severity === "HIGH" ? "#f59e0b" : "#3b82f6",
-                  fillColor: h.dominant_severity === "CRITICAL" ? "#ef4444" : h.dominant_severity === "HIGH" ? "#f59e0b" : "#3b82f6",
-                  fillOpacity: 0.15, weight: 2,
-                }}
-              >
-                <Popup>
-                  <div className="p-2 space-y-1 text-xs">
-                    <div className="font-bold text-rose-600 uppercase text-[10px]">GWMC Civic Hotspot</div>
-                    <div className="text-sm font-black text-slate-900">{h.dominant_category}</div>
-                    <div className="text-slate-600 font-semibold">{h.complaint_count} incidents in zone</div>
-                    <div className="pt-1"><SeverityBadge level={h.dominant_severity} /></div>
-                  </div>
-                </Popup>
-              </Circle>
-            ))}
-          </MapContainer>
+              {/* Complaint markers */}
+              {data.complaints.map((c, i) => (
+                c.latitude && c.longitude ? (
+                  <Marker key={i} position={[c.latitude, c.longitude]}>
+                    <Popup>
+                      <div className="p-1 space-y-1 text-xs">
+                        <div className="font-bold text-slate-900">{c.issue_category}</div>
+                        <div className="text-slate-600 font-medium">{c.location_text}</div>
+                        <div className="pt-1"><SeverityBadge level={c.severity_level} /></div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ) : null
+              ))}
+
+              {/* DBSCAN Hotspot circles */}
+              {data.hotspots?.map((h, idx) => (
+                <Circle key={idx} center={[h.center_lat, h.center_lon]} radius={eps * 1000}
+                  pathOptions={{
+                    color: h.dominant_severity === "CRITICAL" ? "#ef4444" : h.dominant_severity === "HIGH" ? "#f59e0b" : "#3b82f6",
+                    fillColor: h.dominant_severity === "CRITICAL" ? "#ef4444" : h.dominant_severity === "HIGH" ? "#f59e0b" : "#3b82f6",
+                    fillOpacity: 0.15, weight: 2,
+                  }}
+                >
+                  <Popup>
+                    <div className="p-2 space-y-1 text-xs">
+                      <div className="font-bold text-rose-600 uppercase text-[10px]">GWMC Civic Hotspot</div>
+                      <div className="text-sm font-black text-slate-900">{h.dominant_category}</div>
+                      <div className="text-slate-600 font-semibold">{h.complaint_count} incidents in zone</div>
+                      <div className="pt-1"><SeverityBadge level={h.dominant_severity} /></div>
+                    </div>
+                  </Popup>
+                </Circle>
+              ))}
+            </MapContainer>
+          </div>
         </div>
-      </div>
-
-      {/* Warangal Map Overview Image */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-4 shadow-soft">
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">GWMC Warangal Smart City Zone Overview</div>
-        <img src="/warangal_map.jpg" alt="GWMC Warangal Zone Map" className="w-full rounded-2xl object-cover max-h-80 border border-slate-100" />
-        <p className="text-[11px] text-slate-400 mt-2 text-center">
-          AI-generated reference illustration of GWMC civic issue zones across Hanamkonda, Kazipet, NIT Warangal, MGM Hospital, and Fort Warangal areas.
-        </p>
-      </div>
+      ) : (
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-soft space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              GWMC Warangal Smart City Master GIS Blueprint
+            </div>
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-2.5 py-1 rounded-full uppercase">
+              Official Urban Mapping
+            </span>
+          </div>
+          <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-md">
+            <img src="/warangal_map.jpg" alt="GWMC Warangal Zone Map" className="w-full object-contain max-h-[600px] mx-auto" />
+          </div>
+          <p className="text-xs text-slate-500 text-center">
+            Comprehensive GIS municipal map showing administrative zones across Hanamkonda Market, Kazipet Junction, NIT Warangal, MGM Hospital, Kakatiya University, and Fort Warangal.
+          </p>
+        </div>
+      )}
 
       {/* Hotspot Summary Cards */}
       {data.hotspots?.length > 0 && (

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Phase 3: Data Preprocessing
 Preprocess raw NYC 311 records into structured train/test datasets for CivicSense AI NLP Classifier.
 """
@@ -7,8 +7,8 @@ import numpy as np
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 
-RAW_PATH = Path("c:/PROJECTS/Sustainability/civicsense-ai/data/raw/nyc_311_sample.csv")
-PROC_DIR = Path("c:/PROJECTS/Sustainability/civicsense-ai/data/processed")
+RAW_PATH = Path(__file__).resolve().parent / "raw" / "nyc_311_sample.csv"
+PROC_DIR = Path(__file__).resolve().parent / "processed"
 PROC_DIR.mkdir(parents=True, exist_ok=True)
 
 TRAIN_PATH = PROC_DIR / "complaints_train.csv"

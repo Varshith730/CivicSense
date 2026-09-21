@@ -1,4 +1,4 @@
-﻿"""
+"""
 CivicSense AI — Recommendation Engine (GWMC Warangal Edition)
 Routes complaints to official GWMC departmental wings.
 """
@@ -75,6 +75,7 @@ def build_recommendation(issue_category: str, severity_level: str) -> dict:
     return {
         "department": dept,
         "action_recommendation": action,
+        "action": action,
         "escalation_contact": "GWMC Commissioner, Warangal | gwmc.gov.in | 1800-599-4977",
         "city": "Warangal (GWMC)",
     }

@@ -1,16 +1,16 @@
-﻿"""
+"""
 Phase 4: Train NLP Classifier on real processed NYC 311 dataset
 Computes Precision, Recall, F1, Accuracy, and saves the trained model artifacts.
 """
 import sys
-from pathlib import Path
-sys.path.insert(0, "c:/PROJECTS/Sustainability/civicsense-ai")
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 import pandas as pd
 from core.nlp.classifier import CivicSenseClassifier, CLASSIFIER_PATH, LABEL_ENC_PATH
 
-train_path = "c:/PROJECTS/Sustainability/civicsense-ai/data/processed/complaints_train.csv"
-test_path = "c:/PROJECTS/Sustainability/civicsense-ai/data/processed/complaints_test.csv"
+train_path = ROOT_DIR / "data" / "processed" / "complaints_train.csv"
+test_path = ROOT_DIR / "data" / "processed" / "complaints_test.csv"
 
 train_df = pd.read_csv(train_path)
 test_df = pd.read_csv(test_path)

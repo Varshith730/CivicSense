@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -34,6 +34,8 @@ yarn-error.log*
 # Environment & Secrets
 .env
 .env.local
+database/firebase_credentials.json
+*firebase_credentials*.json
 
 # Temporary Uploads & Caches
 uploads/test_*

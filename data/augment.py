@@ -1,11 +1,12 @@
-﻿"""
+"""
 Augment NYC 311 training set with diverse citizen phrased complaints
 to ensure high accuracy on conversational inputs as well as administrative logs.
 """
+from pathlib import Path
 import pandas as pd
 import numpy as np
 
-train_path = "c:/PROJECTS/Sustainability/civicsense-ai/data/processed/complaints_train.csv"
+train_path = Path(__file__).resolve().parent / "processed" / "complaints_train.csv"
 train_df = pd.read_csv(train_path)
 
 conversational_examples = [

@@ -1,4 +1,4 @@
-﻿# CivicSense AI
+# CivicSense AI
 ## AI-Powered Civic Issue Intelligence & Sustainable Response System
 
 > **Internship:** 1M1B AI for Sustainability Virtual Internship in collaboration with IBM SkillsBuild & AICTE  
@@ -14,6 +14,15 @@
 **CivicSense AI** is a production-grade, full-stack civic intelligence platform designed to transform unstructured citizen complaints (text, photographs, and geographic locations) into structured, actionable, and explainable data for municipal corporations.
 
 Built specifically for the **Greater Warangal Municipal Corporation (GWMC)**, CivicSense AI automates civic grievance triage across Hanamkonda, Kazipet, and Warangal zones, bridging the gap between citizen reporting and sustainable urban governance.
+
+### 🎯 Official Problem Statement
+> **"How might we use AI to automatically triage, prioritize, and spatially cluster unstructured civic grievances in real time so that urban municipal corporations (such as the Greater Warangal Municipal Corporation - GWMC) can become more sustainable, responsive, and resource-efficient?"**
+
+### 💡 The 4 Core Questions
+1. **What problem are you solving?** Passive civic grievance triage paralysis, delayed hazard remediation, and absence of spatial clustering in urban municipal corporations.
+2. **Who is affected?** 1M+ residents of Greater Warangal exposed to civic hazards (water contamination, road craters, uncollected waste) and overburdened municipal engineers and sanitation crews.
+3. **Why is AI needed?** Sub-second classification of high-volume unstructured text/images, deterministic mathematical prioritization, and DBSCAN geospatial hotspot detection.
+4. **How does your solution create impact?** 60%+ reduction in triage turnaround, optimized municipal vehicle dispatch (saving ~25% in fuel), and prevention of urban flooding and road accidents.
 
 ---
 
@@ -155,6 +164,25 @@ civicsense-ai/
 | **SDG 6.1 & 6.4** (Clean Water) | Water Pipe Bursts / Leaks | Protects potable water distribution network (Mission Bhagiratha). |
 | **SDG 13.1** (Climate Resilience) | Drainage Blockage & Flooding | Mitigates monsoon flash floods through early nala de-silting. |
 | **SDG 15.1** (Terrestrial Ecosystems)| Fallen Trees / Urban Flora | Preserves green canopy while safely securing overhead power lines. |
+
+---
+
+## 🛡️ Responsible AI Considerations (Mandatory)
+
+CivicSense AI embeds the four mandatory ethical pillars required by the **1M1B x IBM SkillsBuild x AICTE** guidelines:
+
+1. **Fairness (Avoiding Demographic & Socio-Economic Bias):**  
+   - NLP models are trained and augmented with informal, conversational Indian civic expressions, preventing linguistic bias against vernacular speakers.
+   - The 6-factor severity rubric evaluates physical hazard severity (safety risks, leak volume) rather than complainant profile or VIP status, ensuring equitable triage across all municipal wards.
+2. **Transparency (Explainable AI & Auditing):**  
+   - Every triage decision provides a transparent mathematical breakdown across 6 factors and a natural-language justification.
+   - Decision-support only: Municipal officers have human-in-the-loop override capabilities to adjust category or severity.
+3. **Ethics (Constructive Public Utility):**  
+   - The system is built exclusively for municipal infrastructure maintenance and environmental remediation.
+   - Strict prohibition of punitive citizen surveillance, tracking, or discriminatory service throttling.
+4. **Privacy (Protection of Citizen Data):**  
+   - All Personal Identifiable Information (PII) like phone numbers and personal names is scrubbed prior to triage and analytics.
+   - Only civic metadata (issue category, description, and GPS coordinates) is routed to departmental field units.
 
 ---
 

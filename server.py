@@ -1,4 +1,4 @@
-﻿"""
+"""
 CivicSense AI - FastAPI Backend Server
 Serves REST API endpoints for React UI to interact with AI Engine, Database, and Analytics.
 """
@@ -22,6 +22,14 @@ from core.sdg.sdg_mapper import map_category_to_sdg, SDG_INFO, CATEGORY_SDG_MAP,
 from core.recommendations.recommendation_engine import build_recommendation
 from core.geo.hotspot_detector import detect_hotspots
 
+from core.ai_assistant.rag_engine import (
+    ingest_document, 
+    retrieve_relevant_chunks, 
+    generate_llm_response, 
+    check_complaint_status_in_query
+)
+from database.firebase_db import is_firebase_configured
+
 # Ensure database is initialized
 db.init_db()
 
@@ -41,27 +49,32 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
-# ── Knowledge Base for Assistant ────────────────────────────────
-KNOWLEDGE_BASE = {
-    "sdg 11": "SDG 11 — Sustainable Cities and Communities — aims to make cities inclusive, safe, resilient, and sustainable. Key targets include safe transport (11.2), reducing disaster risk (11.5), reducing environmental impact of cities through waste and air quality management (11.6), and universal access to safe green public spaces (11.7).",
-    "sdg 6": "SDG 6 — Clean Water and Sanitation — focuses on ensuring safe drinking water access and reducing water wastage. In CivicSense AI, water pipe bursts, leaks, and contaminated wastewater directly link to SDG 6 targets 6.1 and 6.4.",
-    "sdg 12": "SDG 12 — Responsible Consumption and Production — emphasizes waste prevention and reduction (Target 12.5). Uncollected urban waste directly violates circular consumption principles.",
-    "sdg 13": "SDG 13 — Climate Action — deals with resilience to climate hazards. Urban flash floods, clogged drainage, and open waste burning emissions are tracked under SDG 13 in CivicSense AI.",
-    "sdg 15": "SDG 15 — Life on Land — focuses on terrestrial ecosystems. Urban fallen trees and loss of green canopies are flagged under SDG 15 (Target 15.1).",
-    "severity scoring": "CivicSense AI uses a transparent 6-factor deterministic scoring rubric (0-100 pts): (1) Public Safety (up to 25 pts), (2) Environmental Impact (up to 20 pts), (3) Duration ongoing (up to 15 pts), (4) Population affected (up to 15 pts), (5) Evidence strength (up to 15 pts), and (6) Similar nearby complaints (up to 10 pts). Scores map to LOW (0-24), MEDIUM (25-49), HIGH (50-74), and CRITICAL (75-100).",
-    "duplicate detection": "Duplicate detection uses sentence-transformers (all-MiniLM-L6-v2) embeddings and Haversine geo-filtering. If two complaints share >=72% semantic cosine similarity and are located within 1 km, they are clustered into a shared Incident Cluster to prevent duplicate department dispatch.",
-    "computer vision": "CivicSense AI uses OpenAI CLIP (ViT-B/32) for zero-shot image classification across civic categories. It generates a confidence score. If confidence is below 70%, it explicitly alerts municipal administrators that human verification is recommended.",
-    "responsible ai": "Responsible AI principles are strictly enforced: (1) Human-in-the-loop: AI recommends actions but cannot autonomously close tickets. (2) Explainability: Every priority score has a transparent factor breakdown. (3) Fairness: No citizen demographic data is captured or used in scoring. (4) Data honesty: Real NYC 311 datasets and synthetic demo samples are clearly distinguished.",
-    "hotspots": "Hotspots are discovered through spatial DBSCAN clustering using Haversine distance. An area with 3 or more complaints of the same category within 500 meters is flagged as a civic hotspot on the interactive map."
-}
-
-
 # ── Pydantic Request Models ─────────────────────────────────────
 class StatusUpdateRequest(BaseModel):
     status: str
 
 class QuestionRequest(BaseModel):
     question: str
+
+class AssignOfficerRequest(BaseModel):
+    officer_id: str
+    officer_name: str
+    notes: Optional[str] = None
+
+class CreateOfficerRequest(BaseModel):
+    name: str
+    department: str
+    designation: str
+    ward: Optional[str] = ""
+    phone: Optional[str] = ""
+    email: Optional[str] = ""
+
+class ChatRequest(BaseModel):
+    message: str
+
+class SystemConfigRequest(BaseModel):
+    gemini_api_key: Optional[str] = None
+    firebase_service_account_json: Optional[str] = None
 
 
 # ── Endpoints ───────────────────────────────────────────────────
@@ -372,45 +385,139 @@ def get_sustainability_insights():
     }
 
 
+@app.post("/api/chat")
+def chat_with_assistant(req: ChatRequest):
+    """RAG-grounded LLM civic assistant."""
+    ticket_info = check_complaint_status_in_query(req.message)
+    context_chunks = retrieve_relevant_chunks(req.message, top_k=3)
+    result = generate_llm_response(req.message, context_chunks, ticket_info)
+    return result
+
+
 @app.post("/api/assistant")
-def chat_assistant(req: QuestionRequest):
-    """Retrieval-grounded response for civic assistant."""
-    q_lower = req.question.lower().strip()
-
-    best_match = None
-    best_score = 0
-    for key, ans in KNOWLEDGE_BASE.items():
-        words = key.split()
-        score = sum(1 for w in words if w in q_lower)
-        if score > best_score:
-            best_score = score
-            best_match = ans
-
-    if best_match and best_score > 0:
-        answer = best_match
-    else:
-        answer = (
-            "I don't have a verified record for that specific query in my civic knowledge base. "
-            "You can ask about: severity scoring criteria, SDG 11 alignment, duplicate detection thresholds, "
-            "how CLIP computer vision works, hotspot clustering, or responsible AI guidelines."
-        )
-
+def legacy_assistant(req: QuestionRequest):
+    """Backward-compatible endpoint for existing UI components."""
+    ticket_info = check_complaint_status_in_query(req.question)
+    context_chunks = retrieve_relevant_chunks(req.question, top_k=3)
+    res = generate_llm_response(req.question, context_chunks, ticket_info)
     return {
         "question": req.question,
-        "answer": answer,
-        "source": "CivicSense Verified Knowledge Base (SDG 11 & Municipal Standards)"
+        "answer": res["answer"],
+        "source": f"CivicSense RAG Knowledge Base ({res.get('model', 'LLM')})"
     }
 
 
-@app.post("/api/seed")
-def seed_database():
-    """Re-seed the database with synthetic demo data."""
+# ── Officers & Workforce Management ──────────────────────────────
+@app.get("/api/officers")
+def list_officers():
+    """Retrieve all municipal officers for ticket assignment."""
+    return {"officers": db.get_all_officers()}
+
+
+@app.post("/api/officers")
+def create_officer(req: CreateOfficerRequest):
+    """Admin creates a new municipal department officer."""
+    oid = db.insert_officer(
+        name=req.name,
+        department=req.department,
+        designation=req.designation,
+        ward=req.ward or "",
+        phone=req.phone or "",
+        email=req.email or ""
+    )
+    return {"success": True, "officer_id": oid, "message": f"Officer {req.name} successfully registered."}
+
+
+@app.post("/api/complaints/{complaint_id}/assign")
+def assign_officer(complaint_id: str, req: AssignOfficerRequest):
+    """Admin assigns a civic complaint to a specific field officer."""
+    complaint = db.get_complaint(complaint_id)
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    db.assign_complaint_officer(
+        complaint_id=complaint_id,
+        officer_id=req.officer_id,
+        officer_name=req.officer_name,
+        notes=req.notes
+    )
+    return {
+        "success": True, 
+        "message": f"Complaint {complaint.get('ticket_id', complaint_id)} successfully assigned to {req.officer_name}."
+    }
+
+
+# ── RAG Knowledge Hub Endpoints ──────────────────────────────────
+@app.post("/api/admin/rag/upload")
+async def upload_rag_document(file: UploadFile = File(...), title: Optional[str] = Form(None)):
+    """Admin uploads a municipal circular or policy PDF/TXT to index into RAG."""
+    suffix = Path(file.filename).suffix.lower()
+    if suffix not in [".pdf", ".txt", ".md"]:
+        raise HTTPException(status_code=400, detail="Only PDF, TXT, and Markdown files are supported for RAG indexing.")
+
+    rag_dir = Path(__file__).parent / "uploads" / "rag_docs"
+    rag_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = rag_dir / file.filename
+
+    with open(dest_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
     try:
-        from database.seed_data import seed
-        seed()
-        return {"success": True, "message": "Database successfully seeded with synthetic demo complaints."}
+        info = ingest_document(dest_path, title=title)
+        return {
+            "success": True, 
+            "document": info, 
+            "message": f"Document '{file.filename}' indexed into {info['chunks_indexed']} knowledge chunks."
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to ingest document: {e}")
+
+
+@app.get("/api/admin/rag/documents")
+def list_rag_documents():
+    """List all indexed municipal documents in RAG."""
+    return {"documents": db.get_all_rag_documents()}
+
+
+@app.delete("/api/admin/rag/documents/{doc_id}")
+def delete_rag_document(doc_id: str):
+    """Admin deletes a document from the RAG knowledge base."""
+    db.delete_rag_document(doc_id)
+    return {"success": True, "message": "Document and chunks removed from RAG knowledge base."}
+
+
+# ── System Control & Clean Slate ────────────────────────────────
+@app.post("/api/admin/clear-all")
+def clear_all_data():
+    """Wipes all complaints and analysis data to start from clean scratch."""
+    db.clear_all_complaints()
+    return {"success": True, "message": "All complaints wiped clean. System running from scratch with 0 demo data."}
+
+
+@app.get("/api/system/status")
+def get_system_status():
+    """Telemetry on database connection, Firebase status, and LLM configuration."""
+    return {
+        "firebase_configured": is_firebase_configured(),
+        "gemini_configured": bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")),
+        "total_complaints": db.get_total_count(),
+        "officers_count": len(db.get_all_officers()),
+        "rag_documents_count": len(db.get_all_rag_documents())
+    }
+
+
+@app.post("/api/system/config")
+def update_system_config(req: SystemConfigRequest):
+    """Dynamically update API keys or Firebase service account configuration."""
+    if req.gemini_api_key:
+        os.environ["GEMINI_API_KEY"] = req.gemini_api_key.strip()
+    if req.firebase_service_account_json:
+        os.environ["FIREBASE_SERVICE_ACCOUNT_JSON"] = req.firebase_service_account_json.strip()
+    return {
+        "success": True,
+        "firebase_configured": is_firebase_configured(),
+        "gemini_configured": bool(os.environ.get("GEMINI_API_KEY"))
+    }
 
 @app.post("/api/sync-live-nyc311")
 def sync_live_nyc311(limit: int = 25):

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Fetch a balanced sample of real NYC 311 complaints directly from the NYC Open Data Socrata API.
 No manual download or API key required.
 """
@@ -6,7 +6,7 @@ import requests
 import pandas as pd
 from pathlib import Path
 
-DATA_DIR = Path("c:/PROJECTS/Sustainability/civicsense-ai/data/raw")
+DATA_DIR = Path(__file__).resolve().parent / "raw"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_FILE = DATA_DIR / "nyc_311_sample.csv"
 

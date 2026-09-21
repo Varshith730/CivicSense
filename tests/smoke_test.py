@@ -1,5 +1,6 @@
-﻿import sys
-sys.path.insert(0, 'c:/PROJECTS/Sustainability/civicsense-ai')
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 print("=== Testing Core Modules ===")
 
 # 1. Database

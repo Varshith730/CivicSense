@@ -1,22 +1,16 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
-import Overview from "./pages/Overview";
-import ReportIssue from "./pages/ReportIssue";
-import AnalysisLab from "./pages/AnalysisLab";
-import Complaints from "./pages/Complaints";
-import HotspotMap from "./pages/HotspotMap";
-import Analytics from "./pages/Analytics";
-import Sustainability from "./pages/Sustainability";
-import AIAssistant from "./pages/AIAssistant";
+import CitizenPortal from "./pages/CitizenPortal";
 import Admin from "./pages/Admin";
-import { getKPIs, seedDatabase, syncLiveNYC311 } from "./api";
+import HotspotMap from "./pages/HotspotMap";
+import Sustainability from "./pages/Sustainability";
+import AnalysisLab from "./pages/AnalysisLab";
+import { getKPIs } from "./api";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeMode, setActiveMode] = useState("citizen"); // citizen | admin
+  const [activeTab, setActiveTab] = useState("citizen");
   const [kpis, setKpis] = useState(null);
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   const fetchKpis = async () => {
     try {
@@ -31,79 +25,49 @@ export default function App() {
     fetchKpis();
   }, []);
 
-  const handleSeed = async () => {
-    try {
-      setIsSeeding(true);
-      await seedDatabase();
-      await fetchKpis();
-      alert("Database successfully reset and seeded with demo complaints!");
-    } catch (err) {
-      alert("Failed to seed database: " + err.message);
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
-  const handleSyncLive = async () => {
-    try {
-      setIsSyncing(true);
-      const res = await syncLiveNYC311(10);
-      await fetchKpis();
-      alert(res.message || "Successfully pulled 10 live complaints from NYC 311 OpenData API!");
-    } catch (err) {
-      alert("Failed to sync live data: " + (err.response?.data?.detail || err.message));
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
   const renderContent = () => {
     switch (activeTab) {
-      case "overview":
-        return <Overview setActiveTab={setActiveTab} />;
-      case "report":
-        return <ReportIssue onSubmitted={() => { fetchKpis(); setActiveTab("complaints"); }} />;
-      case "analysis":
-        return <AnalysisLab />;
-      case "complaints":
-        return <Complaints />;
+      case "citizen":
+        return (
+          <CitizenPortal 
+            onComplaintSubmitted={fetchKpis}
+            onSwitchToAdmin={() => {
+              setActiveMode("admin");
+              setActiveTab("admin");
+            }}
+          />
+        );
+      case "admin":
+        return <Admin />;
       case "hotspots":
         return <HotspotMap />;
-      case "analytics":
-        return <Analytics />;
       case "sustainability":
         return <Sustainability />;
-      case "assistant":
-        return <AIAssistant />;
-      case "admin":
-        return <Admin onSyncLive={handleSyncLive} isSyncing={isSyncing} />;
+      case "analysis":
+        return <AnalysisLab />;
       default:
-        return <Overview setActiveTab={setActiveTab} />;
+        return (
+          <CitizenPortal 
+            onComplaintSubmitted={fetchKpis}
+            onSwitchToAdmin={() => {
+              setActiveMode("admin");
+              setActiveTab("admin");
+            }}
+          />
+        );
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <Navbar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onSeed={handleSeed}
-        isSeeding={isSeeding}
-        onSyncLive={handleSyncLive}
-        isSyncing={isSyncing}
+        activeMode={activeMode}
+        setActiveMode={setActiveMode}
+        setActiveTab={setActiveTab}
       />
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          kpis={kpis} 
-        />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
-            {renderContent()}
-          </div>
-        </main>
-      </div>
+      <main className="flex-1 overflow-y-auto">
+        {renderContent()}
+      </main>
     </div>
   );
 }
